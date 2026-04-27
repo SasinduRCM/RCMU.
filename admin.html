@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — Rahula College Media Unit Database</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .admin-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+      animation: fadeSlideUp 0.5s 0.15s cubic-bezier(.22,1,.36,1) both;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px 18px;
+      text-align: center;
+      transition: all var(--transition);
+      position: relative;
+      overflow: hidden;
+      cursor: default;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s cubic-bezier(.22,1,.36,1);
+    }
+
+    .stat-card:hover { border-color: var(--border-soft); transform: translateY(-3px); box-shadow: var(--shadow-sm); }
+    .stat-card:hover::before { transform: scaleX(1); }
+
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      font-weight: 600;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    @media (max-width: 600px) {
+      .admin-stats { grid-template-columns: 1fr 1fr; }
+      .admin-stats .stat-card:last-child { grid-column: 1 / -1; }
+    }
+
+    @media (max-width: 420px) {
+      .admin-stats { grid-template-columns: 1fr; }
+      .admin-stats .stat-card:last-child { grid-column: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header class="page-header">
+    <div class="header-logos-row">
+      <div class="header-logo logo-left">
+        <img src="Rahula_College_Crest.png" alt="Rahula College logo">
+        <span class="logo-label"></span>
+      </div>
+      <div class="header-logo logo-right">
+        <img src="Media Unit Original logo.png" alt="Media Unit logo">
+        <span class="logo-label"></span>
+      </div>
+    </div>
+    <div class="header-title">
+      <h1>Rahula College Media Unit</h1>
+      <p class="subtitle">Admin panel — manage administrators and database access.</p>
+    </div>
+  </header>
+
+  <div class="header-actions">
+    <span id="currentUser" class="user-badge"></span>
+    <a class="secondary-link" href="add.html">Add Student</a>
+    <a class="secondary-link" href="index.html">View Students</a>
+    <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+  </div>
+
+  <div class="admin-stats">
+    <div class="stat-card">
+      <div class="stat-value" id="statAdmins">—</div>
+      <div class="stat-label">Total Admins</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statEditors" style="color:var(--accent2)">—</div>
+      <div class="stat-label">Editors</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statViewers" style="color:var(--green)">—</div>
+      <div class="stat-label">Viewers</div>
+    </div>
+  </div>
+
+  <p class="section-title">Manage Administrators</p>
+
+  <div class="panel-grid" id="adminPanel">
+    <div class="panel-card">
+      <h2>Create Admin User</h2>
+      <input id="ADM_Email"    placeholder="Email address" type="email">
+      <input id="ADM_ID"       placeholder="Admin ID (e.g. ADM001)">
+      <input id="ADM_Uname"    placeholder="Username">
+      <input id="ADM_name"     placeholder="Full Name">
+      <input id="ADM_password" type="password" placeholder="Password">
+      <select id="ADM_role">
+        <option value="" disabled selected>Select role…</option>
+        <option value="admin">⚡ Admin — full access</option>
+        <option value="editor">✏️ Editor — add/edit students</option>
+        <option value="viewer">👁 Viewer — view only</option>
+      </select>
+      <button onclick="createUser()">Create User</button>
+      <p id="userMsg"></p>
+    </div>
+
+    <div class="panel-card">
+      <h2>Existing Administrators</h2>
+      <div id="userList">
+        <div class="empty-state">Loading…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── FOOTER ──────────────────────────────────────────────── -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-top">
+
+      <div class="footer-brand">
+        <div class="footer-logos">
+          <img src="Rahula_College_Crest.png" alt="Rahula College" class="footer-logo-img">
+          <img src="Media Unit Original logo.png" alt="Media Unit" class="footer-logo-img">
+          <div>
+            <div class="footer-brand-name">Rahula College<br>Media Unit</div>
+          </div>
+        </div>
+        <p class="footer-brand-desc">
+          The official database system for the Rahula College Media Unit — managing student records, roles, and departments across all grades.
+        </p>
+        <div class="footer-tech-badges">
+          <span class="tech-badge">Firebase</span>
+          <span class="tech-badge">Firestore</span>
+          <span class="tech-badge">Vanilla JS</span>
+          <span class="tech-badge">SheetJS</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Navigation</div>
+        <div class="footer-links">
+          <a href="index.html">Student Roster</a>
+          <a href="add.html">Add Student</a>
+          <a href="admin.html">Admin Panel</a>
+          <a href="login.html">Sign In</a>
+        </div>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Access Roles</div>
+        <div class="footer-links">
+          <a href="#" onclick="return false;">⚡ Admin — Full access</a>
+          <a href="#" onclick="return false;">✏️ Editor — Add &amp; edit</a>
+          <a href="#" onclick="return false;">👁 Viewer — View only</a>
+          <a href="#" onclick="doLogout();return false;">Sign Out</a>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer-bottom">
+      <div class="footer-copy">
+        &copy; <span id="footerYear"></span> Rahula College Media Unit.<br>
+        <span>All rights reserved. Unauthorised access is prohibited.</span>
+      </div>
+
+      <div class="footer-dev">
+        <span class="footer-dev-label">Designed &amp; Developed by</span>
+        <a href="https://sasindu.rcm.github.io/Sasindu/" class="footer-dev-link" title="Visit Sasindu Ruwaneka's portfolio" id="devPortfolioLink">
+          <div class="dev-avatar">SR</div>
+          <span class="dev-name">Sasindu Ruwaneka</span>
+          <span class="dev-badge">Dev</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="admin-data.js"></script>
+<script type="module" src="app.js"></script>
+<script>
+  document.getElementById('footerYear').textContent = new Date().getFullYear();
+</script>
+</body>
+</html>

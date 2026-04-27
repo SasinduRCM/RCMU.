@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Student — Rahula College Media Unit Database</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+  <header class="page-header">
+    <div class="header-logos-row">
+      <div class="header-logo logo-left">
+        <img src="Rahula_College_Crest.png" alt="Rahula College logo">
+        <span class="logo-label"></span>
+      </div>
+      <div class="header-logo logo-right">
+        <img src="Media Unit Original logo.png" alt="Media Unit logo">
+        <span class="logo-label"></span>
+      </div>
+    </div>
+    <div class="header-title">
+      <h1>Rahula College Media Unit Database</h1>
+      <p class="subtitle">Add new student records for the media unit.</p>
+    </div>
+  </header>
+
+  <div class="header-actions">
+    <span id="currentUser" class="user-badge"></span>
+    <a class="secondary-link" href="index.html">View Students</a>
+    <a class="secondary-link" href="admin.html" id="adminLink" style="display:none">Admin Panel</a>
+    <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+  </div>
+
+  <div class="form">
+    <div class="form-grid">
+      <input id="fullname"        placeholder="Full Name">
+      <input id="nickname"        placeholder="Nickname">
+      <input id="studentId"       placeholder="Student ID">
+      <input id="grade"           placeholder="Grade">
+      <input id="studentClass"    placeholder="Class">
+      <input id="email"           placeholder="Email">
+      <div class="role-options full-row">
+        <span class="role-options-label" for="roleCount">Number of Roles</span>
+        <select id="roleCount">
+          <option value="" disabled selected>Select number of roles</option>
+          <option value="1">1 role</option>
+          <option value="2">2 roles</option>
+          <option value="3">3 roles</option>
+        </select>
+        <div id="roleFields" class="role-fields">
+          <div class="role-block">
+            <select id="roleField1" class="role-input" style="display:none">
+              <option value="" disabled selected>Role 1</option>
+              <option value="Executive">Executive </option>
+              <option value="Sinhala Announcer">Sinhala Announcer</option>
+              <option value="English Announce">English Announcer</option>
+              <option value="Technician">Technician</option>
+              <option value="SinhalaNews editor">SinhalaNews editor</option>
+              <option value="English News editor">English News editor</option>
+              <option value="Photographer">Photographer</option>
+              <option value="Videographer">Videographer</option>
+              <option value="Graphic designer">Graphic designer</option>
+              <option value="Video editor">Video editor</option>
+              <option value="Audio editor">Audio editor</option>
+              <option value="Web developer">Web developer</option>
+              <option value="Cartoon drawer">Cartoon drawer</option>
+              <option value="Poster drawer">Poster drawer</option>
+            </select>
+            <div id="roleSub1" class="role-subfield" style="display:none">
+              <label><input type="checkbox" value="Program presenting"> Program presenting</label>
+              <label><input type="checkbox" value="News presenting"> News presenting</label>
+              <label><input type="checkbox" value="Dubbing"> Dubbing</label>
+              <label><input type="checkbox" value="Sport commentary"> Sport commentary</label>
+            </div>
+          </div>
+          <div class="role-block">
+            <select id="roleField2" class="role-input" style="display:none">
+              <option value="" disabled selected>Role 2</option>
+              <option value="Executive">Executive </option>
+              <option value="Sinhala Announcer">Sinhala Announcer</option>
+              <option value="English Announce">English Announcer</option>
+              <option value="Technician">Technician</option>
+              <option value="SinhalaNews editor">SinhalaNews editor</option>
+              <option value="English News editor">English News editor</option>
+              <option value="Photographer">Photographer</option>
+              <option value="Videographer">Videographer</option>
+              <option value="Graphic designer">Graphic designer</option>
+              <option value="Video editor">Video editor</option>
+              <option value="Audio editor">Audio editor</option>
+              <option value="Web developer">Web developer</option>
+              <option value="Cartoon drawer">Cartoon drawer</option>
+              <option value="Poster drawer">Poster drawer</option>
+            </select>
+            <div id="roleSub2" class="role-subfield" style="display:none">
+              <label><input type="checkbox" value="Program presenting"> Program presenting</label>
+              <label><input type="checkbox" value="News presenting"> News presenting</label>
+              <label><input type="checkbox" value="Dubbing"> Dubbing</label>
+              <label><input type="checkbox" value="Sport commentary"> Sport commentary</label>
+            </div>
+          </div>
+          <div class="role-block">
+            <select id="roleField3" class="role-input" style="display:none">     
+              <option value="" disabled selected>Role 3</option>
+              <option value="Executive">Executive </option>
+              <option value="Sinhala Announcer">Sinhala Announcer</option>
+              <option value="English Announce">English Announcer</option>
+              <option value="Technician">Technician</option>
+              <option value="SinhalaNews editor">SinhalaNews editor</option>
+              <option value="English News editor">English News editor</option>
+              <option value="Photographer">Photographer</option>
+              <option value="Videographer">Videographer</option>
+              <option value="Graphic designer">Graphic designer</option>
+              <option value="Video editor">Video editor</option>
+              <option value="Audio editor">Audio editor</option>
+              <option value="Web developer">Web developer</option>
+              <option value="Cartoon drawer">Cartoon drawer</option>
+              <option value="Poster drawer">Poster drawer</option>
+            </select>
+            <div id="roleSub3" class="role-subfield" style="display:none">
+              <label><input type="checkbox" value="Program presenting"> Program presenting</label>
+              <label><input type="checkbox" value="News presenting"> News presenting</label>
+              <label><input type="checkbox" value="Dubbing"> Dubbing</label>
+              <label><input type="checkbox" value="Sport commentary"> Sport commentary</label>
+            </div>
+          </div>
+        </div>
+        <small class="form-note">Select up to 3 roles; announcer subcategories may be selected together. Saved as <code>Role - sub1, sub2</code>.</small>
+      </div>
+      <div class="triple-row full-row">
+        <select id="department">
+          <option value="" disabled selected>Select Department</option>
+          <option value="Photography">Photography</option>
+          <option value="Web">Web</option>
+          <option value="Media">Media</option>
+        </select>
+        <select id="status">
+          <option value="" disabled selected>Select Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+        <input id="dutyPercentage" type="number" min="0" max="100" placeholder="Duty % (0-100)">
+      </div>
+      <textarea id="dutyActivities" placeholder="Events"></textarea>
+      <textarea id="achievements" placeholder="Achievements"></textarea>
+      <select id="experienceLevel" class="full-row">
+        <option value="" disabled selected>Select Age Category</option>
+        <option value="Junior">Junior</option>
+        <option value="Intermediate">Intermediate</option>
+        <option value="Senior">Senior</option>
+      </select>
+      <input id="profileImageUrl" placeholder="Profile Image URL">
+      <input id="phone"           placeholder="Phone">
+      <input id="whatsapp"       placeholder="WhatsApp Number">
+      <input id="address"         placeholder="Address">
+      <input id="birthday"        type="date" placeholder="Birthday">
+      <input id="joinedYear"      placeholder="Joined Year">
+    </div>
+    <button type="button" onclick="saveStudent()">Save Student</button>
+    <p id="msg"></p>
+  </div>
+</div>
+
+<!-- ── FOOTER ──────────────────────────────────────────────── -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-top">
+
+      <div class="footer-brand">
+        <div class="footer-logos">
+          <img src="Rahula_College_Crest.png" alt="Rahula College" class="footer-logo-img">
+          <img src="Media Unit Original logo.png" alt="Media Unit" class="footer-logo-img">
+          <div>
+            <div class="footer-brand-name">Rahula College<br>Media Unit</div>
+          </div>
+        </div>
+        <p class="footer-brand-desc">
+          The official database system for the Rahula College Media Unit — managing student records, roles, and departments across all grades.
+        </p>
+        <div class="footer-tech-badges">
+          <span class="tech-badge">Firebase</span>
+          <span class="tech-badge">Firestore</span>
+          <span class="tech-badge">Vanilla JS</span>
+          <span class="tech-badge">SheetJS</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Navigation</div>
+        <div class="footer-links">
+          <a href="index.html">Student Roster</a>
+          <a href="add.html">Add Student</a>
+          <a href="admin.html">Admin Panel</a>
+          <a href="login.html">Sign In</a>
+        </div>
+      </div>
+
+      <div>
+        <div class="footer-col-title">System</div>
+        <div class="footer-links">
+          <a href="index.html">View All Students</a>
+          <a href="add.html">New Record</a>
+          <a href="#" onclick="doLogout();return false;">Sign Out</a>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer-bottom">
+      <div class="footer-copy">
+        &copy; <span id="footerYear"></span> Rahula College Media Unit.<br>
+        <span>All rights reserved. Unauthorised access is prohibited.</span>
+      </div>
+
+      <div class="footer-dev">
+        <span class="footer-dev-label">Designed &amp; Developed by</span>
+        <a href="https://sasindu.rcm.github.io/Sasindu/" class="footer-dev-link" title="Visit Sasindu Ruwaneka's portfolio" id="devPortfolioLink">
+          <div class="dev-avatar">SR</div>
+          <span class="dev-name">Sasindu Ruwaneka</span>
+          <span class="dev-badge">Dev</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script type="module" src="app.js"></script>
+<script>
+  document.getElementById('footerYear').textContent = new Date().getFullYear();
+  document.addEventListener('DOMContentLoaded', () => {
+    try {
+      const raw = sessionStorage.getItem('rcmu_admin');
+      if (raw) {
+        const u = JSON.parse(raw);
+        if (u.ADM_role === 'admin') {
+          const link = document.getElementById('adminLink');
+          if (link) link.style.display = 'inline-flex';
+        }
+      }
+    } catch(e) {}
+
+    const roleCount = document.getElementById('roleCount');
+    const getRoleFields = () => {
+      return [1, 2, 3].map(i => document.getElementById(`roleField${i}`)).filter(Boolean);
+    };
+
+    const roleSubField = (index) => document.getElementById(`roleSub${index}`);
+
+    const isAnnouncerRole = (value) => {
+      return value === 'Sinhala Announcer' || value === 'Eng.Ann' || value === 'English Announce' || value === 'English Announcer';
+    };
+
+    const updateRoleOptions = () => {
+      const fields = getRoleFields();
+      const selected = new Set(fields.map(field => field.value).filter(Boolean));
+      fields.forEach(field => {
+        Array.from(field.options).forEach(option => {
+          if (!option.value) return;
+          const alreadySelected = selected.has(option.value);
+          option.disabled = alreadySelected && field.value !== option.value;
+        });
+      });
+    };
+
+    const getRoleSubFields = () => {
+      return [1, 2, 3].map(i => roleSubField(i)).filter(Boolean);
+    };
+
+    const getSelectedSubValues = (subField) => {
+      return Array.from(subField.querySelectorAll('input[type="checkbox"]:checked'))
+        .map(input => input.value.trim())
+        .filter(Boolean);
+    };
+
+    const updateSubcategoryOptions = () => {
+      // Allow the same subcategory to be selected independently for each announcer role.
+      return;
+    };
+
+    const updateRoleSubFields = () => {
+      for (let i = 1; i <= 3; i += 1) {
+        const field = document.getElementById(`roleField${i}`);
+        const subField = roleSubField(i);
+        if (!field || !subField) continue;
+        if (isAnnouncerRole(field.value)) {
+          subField.style.display = 'block';
+        } else {
+          subField.style.display = 'none';
+          subField.querySelectorAll('input[type="checkbox"]').forEach(input => {
+            input.checked = false;
+            input.disabled = false;
+          });
+        }
+      }
+      updateSubcategoryOptions();
+    };
+
+    const updateRoleFields = () => {
+      const count = Number(roleCount?.value || 0);
+      for (let i = 1; i <= 3; i += 1) {
+        const field = document.getElementById(`roleField${i}`);
+        const subField = roleSubField(i);
+        if (!field || !subField) continue;
+        if (i <= count) {
+          field.style.display = 'block';
+        } else {
+          field.style.display = 'none';
+          field.value = '';
+          subField.style.display = 'none';
+          subField.querySelectorAll('input[type="checkbox"]').forEach(input => {
+            input.checked = false;
+            input.disabled = false;
+          });
+        }
+      }
+      updateRoleOptions();
+      updateRoleSubFields();
+    };
+
+    const roleFields = getRoleFields();
+    roleFields.forEach((field) => {
+      field.addEventListener('change', () => {
+        updateRoleOptions();
+        updateRoleSubFields();
+      });
+    });
+
+    const roleSubFields = getRoleSubFields();
+    roleSubFields.forEach((sub) => {
+      sub.querySelectorAll('input[type="checkbox"]').forEach(input => {
+        input.addEventListener('change', updateSubcategoryOptions);
+      });
+    });
+
+    if (roleCount) {
+      roleCount.addEventListener('change', updateRoleFields);
+      updateRoleFields();
+    }
+  });
+</script>
+</body>
+</html>

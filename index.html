@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rahula College Media Unit Database</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+  <header class="page-header">
+    <div class="header-logo logo-left">
+      <img src="Rahula_College_Crest.png" alt="Rahula College logo">
+      <span class="logo-label"></span>
+    </div>
+    <div class="header-title">
+      <h1>Rahula College Media Unit Database</h1>
+      <p class="subtitle">Browse the media unit student roster by grade or department.</p>
+    </div>
+    <div class="header-logo logo-right">
+      <img src="Media Unit Original logo.png" alt="Media Unit logo">
+      <span class="logo-label"></span>
+    </div>
+  </header>
+
+  <div class="header-actions">
+    <span id="currentUser" class="user-badge"></span>
+    <a class="secondary-link" href="add.html" id="addStudentLink">Add Student</a>
+    <a class="secondary-link" href="admin.html" id="adminLink" style="display:none">Admin Panel</a>
+    <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+  </div>
+
+  <div class="search-panel">
+    <div class="search-wrap">
+      <input id="searchInput" type="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search / type grade or department">
+      <div class="search-suggestions" id="searchSuggestions">
+        <button type="button" data-suggestion="grade ">grade</button>
+        <button type="button" data-suggestion="department ">department</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toolbar" id="viewControls">
+    <button id="cardsViewBtn" class="active">Card</button>
+    <button id="tableViewBtn">Table</button>
+    <select id="sortSelect" title="Sort by">
+      <option value="fullname">Sort: Name</option>
+      <option value="studentId">Sort: ID</option>
+      <option value="grade">Sort: Grade</option>
+      <option value="department">Sort: Department</option>
+      <option value="joinedYear">Sort: Joined Year</option>
+    </select>
+    <button id="downloadSheetBtn" type="button">⬇ Download Sheet</button>
+  </div>
+
+  <div id="list"></div>
+</div>
+
+<!-- ── FOOTER ──────────────────────────────────────────────── -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-top">
+
+      <!-- Brand -->
+      <div class="footer-brand">
+        <div class="footer-logos">
+          <img src="Rahula_College_Crest.png" alt="Rahula College" class="footer-logo-img">
+          <img src="Media Unit Original logo.png" alt="Media Unit" class="footer-logo-img">
+          <div>
+            <div class="footer-brand-name">Rahula College<br>Media Unit</div>
+          </div>
+        </div>
+        <p class="footer-brand-desc">
+          The official database system for the Rahula College Media Unit — managing student records, roles, and departments across all grades.
+        </p>
+        <div class="footer-tech-badges">
+          <span class="tech-badge">Firebase</span>
+          <span class="tech-badge">Firestore</span>
+          <span class="tech-badge">Vanilla JS</span>
+          <span class="tech-badge">SheetJS</span>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div>
+        <div class="footer-col-title">Navigation</div>
+        <div class="footer-links">
+          <a href="index.html">Student Roster</a>
+          <a href="add.html">Add Student</a>
+          <a href="admin.html">Admin Panel</a>
+          <a href="login.html">Sign In</a>
+        </div>
+      </div>
+
+      <!-- System -->
+      <div>
+        <div class="footer-col-title">System</div>
+        <div class="footer-links">
+          <a href="#" onclick="return false;">Card View</a>
+          <a href="#" onclick="return false;">Table View</a>
+          <a href="#" onclick="document.getElementById('downloadSheetBtn')?.click();return false;">Export Sheet</a>
+          <a href="#" onclick="doLogout();return false;">Sign Out</a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom bar -->
+    <div class="footer-bottom">
+      <div class="footer-copy">
+        &copy; <span id="footerYear"></span> Rahula College Media Unit.<br>
+        <span>All rights reserved. Unauthorised access is prohibited.</span>
+      </div>
+
+      <div class="footer-dev">
+        <span class="footer-dev-label">Designed &amp; Developed by</span>
+        <a href="https://sasindu.rcm.github.io/Sasindu/" class="footer-dev-link" title="Visit Sasindu Ruwaneka's portfolio" id="devPortfolioLink">
+          <div class="dev-avatar">SR</div>
+          <span class="dev-name">Sasindu Ruwaneka</span>
+          <span class="dev-badge">Dev</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script type="module" src="app.js"></script>
+<script>
+  document.getElementById('footerYear').textContent = new Date().getFullYear();
+  document.addEventListener('DOMContentLoaded', () => {
+    try {
+      const raw = sessionStorage.getItem('rcmu_admin');
+      if (raw) {
+        const u = JSON.parse(raw);
+        if (u.ADM_role === 'admin') {
+          const link = document.getElementById('adminLink');
+          if (link) link.style.display = 'inline-flex';
+        }
+      }
+    } catch(e) {}
+  });
+</script>
+</body>
+</html>
