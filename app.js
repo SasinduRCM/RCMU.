@@ -94,12 +94,24 @@ function getRoleSubcategories(index) {
     .filter(Boolean);
 }
 
+function isAnnouncerRoleValue(value) {
+  return value === 'Sinhala Announcer' || value === 'English Announcer' || value === 'English Announce';
+}
+
 function buildRoleText(index) {
   const field = document.getElementById(`roleField${index}`);
   if (!field?.value.trim()) return "";
   const roleValue = field.value.trim();
   const selectedSubs = getRoleSubcategories(index);
-  return selectedSubs.length ? `${roleValue} - ${selectedSubs.join(", ")}` : roleValue;
+
+  let roleDisplay = roleValue;
+  if (isAnnouncerRoleValue(roleValue)) {
+    const catEl = document.getElementById(`roleCategory${index}`);
+    const cat = catEl?.value || "";
+    if (cat) roleDisplay += ` (${cat})`;
+  }
+
+  return selectedSubs.length ? `${roleDisplay} - ${selectedSubs.join(", ")}` : roleDisplay;
 }
 
 function parseSearchFilter(value) {
@@ -1190,13 +1202,30 @@ function populateEditForm(student) {
   for (let i = 0; i < roleCount; i++) {
     const roleField = document.getElementById(`roleField${i + 1}`);
     if (roleField) {
-      const role = roles[i].split(" - ")[0];
-      roleField.value = role;
+      const roleFull = roles[i].split(" - ")[0].trim(); // e.g. "Sinhala Announcer (B)"
+      // Extract optional category suffix like "(A)", "(B)", "(C)"
+      const catMatch = roleFull.match(/\s*\(([ABC])\)$/);
+      const cat = catMatch ? catMatch[1] : "";
+      const roleBase = roleFull.replace(/\s*\([ABC]\)$/, "").trim();
+
+      roleField.value = roleBase;
       roleField.style.display = "block";
+
+      // Restore category select for announcers
+      const catEl = document.getElementById(`roleCategory${i + 1}`);
+      if (catEl) {
+        if (cat && (roleBase === "Sinhala Announcer" || roleBase === "English Announcer" || roleBase === "English Announce")) {
+          catEl.value = cat;
+          catEl.style.display = "block";
+        } else {
+          catEl.value = "";
+          catEl.style.display = "none";
+        }
+      }
 
       // Handle subcategories for announcers
       const subPart = roles[i].split(" - ")[1];
-      if (subPart && (role === "Sinhala Announcer" || role === "English Announcer" || role === "English Announce")) {
+      if (subPart && (roleBase === "Sinhala Announcer" || roleBase === "English Announcer" || roleBase === "English Announce")) {
         const subField = document.getElementById(`roleSub${i + 1}`);
         if (subField) {
           const subValues = subPart.split(",").map(text => text.trim()).filter(Boolean);
