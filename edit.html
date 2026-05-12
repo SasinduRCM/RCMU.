@@ -53,20 +53,26 @@
           <div class="role-block">
             <select id="roleField1" class="role-input" style="display:none">
               <option value="" disabled selected>Role 1</option>
-              <option value="Executive">Executive </option>
+              <option value="Executive">Executive</option>
               <option value="Sinhala Announcer">Sinhala Announcer</option>
               <option value="English Announce">English Announcer</option>
               <option value="Technician">Technician</option>
-              <option value="SinhalaNews editor">SinhalaNews editor</option>
-              <option value="English News editor">English News editor</option>
+              <option value="SinhalaNews editor">Sinhala News Editor</option>
+              <option value="English News editor">English News Editor</option>
               <option value="Photographer">Photographer</option>
               <option value="Videographer">Videographer</option>
-              <option value="Graphic designer">Graphic designer</option>
-              <option value="Video editor">Video editor</option>
-              <option value="Audio editor">Audio editor</option>
-              <option value="Web developer">Web developer</option>
-              <option value="Cartoon drawer">Cartoon drawer</option>
-              <option value="Poster drawer">Poster drawer</option>
+              <option value="Graphic designer">Graphic Designer</option>
+              <option value="Video editor">Video Editor</option>
+              <option value="Audio editor">Audio Editor</option>
+              <option value="Web developer">Web Developer</option>
+              <option value="Cartoon drawer">Cartoon Drawer</option>
+              <option value="Poster drawer">Poster Drawer</option>
+            </select>
+            <select id="roleCategory1" class="role-category-select" style="display:none">
+              <option value="" disabled selected>Select Category</option>
+              <option value="A">Category A</option>
+              <option value="B">Category B</option>
+              <option value="C">Category C</option>
             </select>
             <div id="roleSub1" class="role-subfield" style="display:none">
               <label><input type="checkbox" value="Program presenting"> Program presenting</label>
@@ -78,20 +84,26 @@
           <div class="role-block">
             <select id="roleField2" class="role-input" style="display:none">
               <option value="" disabled selected>Role 2</option>
-              <option value="Executive">Executive </option>
+              <option value="Executive">Executive</option>
               <option value="Sinhala Announcer">Sinhala Announcer</option>
               <option value="English Announce">English Announcer</option>
               <option value="Technician">Technician</option>
-              <option value="SinhalaNews editor">SinhalaNews editor</option>
-              <option value="English News editor">English News editor</option>
+              <option value="SinhalaNews editor">Sinhala News Editor</option>
+              <option value="English News editor">English News Editor</option>
               <option value="Photographer">Photographer</option>
               <option value="Videographer">Videographer</option>
-              <option value="Graphic designer">Graphic designer</option>
-              <option value="Video editor">Video editor</option>
-              <option value="Audio editor">Audio editor</option>
-              <option value="Web developer">Web developer</option>
-              <option value="Cartoon drawer">Cartoon drawer</option>
-              <option value="Poster drawer">Poster drawer</option>
+              <option value="Graphic designer">Graphic Designer</option>
+              <option value="Video editor">Video Editor</option>
+              <option value="Audio editor">Audio Editor</option>
+              <option value="Web developer">Web Developer</option>
+              <option value="Cartoon drawer">Cartoon Drawer</option>
+              <option value="Poster drawer">Poster Drawer</option>
+            </select>
+            <select id="roleCategory2" class="role-category-select" style="display:none">
+              <option value="" disabled selected>Select Category</option>
+              <option value="A">Category A</option>
+              <option value="B">Category B</option>
+              <option value="C">Category C</option>
             </select>
             <div id="roleSub2" class="role-subfield" style="display:none">
               <label><input type="checkbox" value="Program presenting"> Program presenting</label>
@@ -101,22 +113,28 @@
             </div>
           </div>
           <div class="role-block">
-            <select id="roleField3" class="role-input" style="display:none">     
+            <select id="roleField3" class="role-input" style="display:none">
               <option value="" disabled selected>Role 3</option>
-              <option value="Executive">Executive </option>
+              <option value="Executive">Executive</option>
               <option value="Sinhala Announcer">Sinhala Announcer</option>
               <option value="English Announce">English Announcer</option>
               <option value="Technician">Technician</option>
-              <option value="SinhalaNews editor">SinhalaNews editor</option>
-              <option value="English News editor">English News editor</option>
+              <option value="SinhalaNews editor">Sinhala News Editor</option>
+              <option value="English News editor">English News Editor</option>
               <option value="Photographer">Photographer</option>
               <option value="Videographer">Videographer</option>
-              <option value="Graphic designer">Graphic designer</option>
-              <option value="Video editor">Video editor</option>
-              <option value="Audio editor">Audio editor</option>
-              <option value="Web developer">Web developer</option>
-              <option value="Cartoon drawer">Cartoon drawer</option>
-              <option value="Poster drawer">Poster drawer</option>
+              <option value="Graphic designer">Graphic Designer</option>
+              <option value="Video editor">Video Editor</option>
+              <option value="Audio editor">Audio Editor</option>
+              <option value="Web developer">Web Developer</option>
+              <option value="Cartoon drawer">Cartoon Drawer</option>
+              <option value="Poster drawer">Poster Drawer</option>
+            </select>
+            <select id="roleCategory3" class="role-category-select" style="display:none">
+              <option value="" disabled selected>Select Category</option>
+              <option value="A">Category A</option>
+              <option value="B">Category B</option>
+              <option value="C">Category C</option>
             </select>
             <div id="roleSub3" class="role-subfield" style="display:none">
               <label><input type="checkbox" value="Program presenting"> Program presenting</label>
@@ -126,7 +144,7 @@
             </div>
           </div>
         </div>
-        <small class="form-note">Select up to 3 roles; announcer subcategories may be selected together. Saved as <code>Role - sub1, sub2</code>.</small>
+        <small class="form-note">Select up to 3 roles. For Announcers: choose a <strong>Category (A / B / C)</strong> and tick subcategories. Saved as <code>Role (Cat) - sub1, sub2</code>.</small>
       </div>
       <div class="triple-row full-row">
         <select id="department">
@@ -281,15 +299,18 @@
       for (let i = 1; i <= 3; i += 1) {
         const field = document.getElementById(`roleField${i}`);
         const subField = roleSubField(i);
+        const catField = document.getElementById(`roleCategory${i}`);
         if (!field || !subField) continue;
         if (isAnnouncerRole(field.value)) {
           subField.style.display = 'block';
+          if (catField) catField.style.display = 'block';
         } else {
           subField.style.display = 'none';
           subField.querySelectorAll('input[type="checkbox"]').forEach(input => {
             input.checked = false;
             input.disabled = false;
           });
+          if (catField) { catField.style.display = 'none'; catField.value = ''; }
         }
       }
       updateSubcategoryOptions();
@@ -300,6 +321,7 @@
       for (let i = 1; i <= 3; i += 1) {
         const field = document.getElementById(`roleField${i}`);
         const subField = roleSubField(i);
+        const catField = document.getElementById(`roleCategory${i}`);
         if (!field || !subField) continue;
         if (i <= count) {
           field.style.display = 'block';
@@ -311,6 +333,7 @@
             input.checked = false;
             input.disabled = false;
           });
+          if (catField) { catField.style.display = 'none'; catField.value = ''; }
         }
       }
       updateRoleOptions();

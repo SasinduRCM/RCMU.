@@ -589,6 +589,7 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
+  border-top: 1px solid var(--border);
 }
 
 .card:hover .card-footer-hint {
@@ -1376,16 +1377,239 @@ body {
 }
 
 
-.role-input {
+/* ── ROLE CATEGORY SELECT ─────────────────────────────────── */
+.role-category-select {
   width: 100%;
+  padding: 9px 34px 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(245,158,11,0.45);
+  background: rgba(245,158,11,0.07);
+  color: #fbbf24;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%23f59e0b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+  letter-spacing: 0.03em;
+  margin-top: 2px;
 }
 
-.form-note {
-  display: block;
-  margin-top: 6px;
-  font-size: 0.82rem;
-  color: var(--text-muted);
+.role-category-select:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(245,158,11,0.18);
+  background: rgba(245,158,11,0.11);
 }
+
+.role-category-select option {
+  background: var(--bg-panel);
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* Category badge indicator inside role-block header */
+.role-block {
+  position: relative;
+}
+
+.role-block::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 2px; height: 100%;
+  background: var(--border);
+  border-radius: 2px;
+  transition: background var(--transition);
+}
+
+.role-block:focus-within::before {
+  background: linear-gradient(180deg, var(--accent), var(--accent2));
+}
+
+/* ── ENHANCED FORM STYLES ─────────────────────────────────── */
+
+/* Form section visual dividers */
+.form-section-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin: 4px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  grid-column: 1 / -1;
+}
+
+.form-section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* Input hover glow */
+.form input:not([type=checkbox]):hover,
+.form select:hover,
+.form textarea:hover {
+  border-color: var(--border-soft);
+  background: rgba(30, 41, 59, 0.9);
+}
+
+/* Refined select arrow */
+.form select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 34px;
+}
+
+.form select:focus {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%233b82f6' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* Textarea refinements */
+.form textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* Save button shimmer */
+.form button::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.14) 50%, transparent 70%);
+  background-size: 200% 100%;
+  background-position: -100% 0;
+  transition: background-position 0.6s;
+}
+
+.form button:hover::after {
+  background-position: 200% 0;
+}
+
+/* Role options section enhanced container */
+.role-options {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 14px 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.role-options::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  opacity: 0.6;
+}
+
+.role-options-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.role-options-label::before {
+  content: '';
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px rgba(59,130,246,0.6);
+}
+
+/* Role fields grid */
+.role-fields {
+  background: transparent;
+  padding: 0;
+  margin-top: 10px;
+}
+
+/* Role subfield enhanced */
+.role-subfield {
+  border: 1px solid rgba(59,130,246,0.2);
+  background: rgba(59,130,246,0.04);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-top: 2px;
+}
+
+.role-subfield label {
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: background var(--transition);
+}
+
+.role-subfield label:hover {
+  background: rgba(59,130,246,0.08);
+}
+
+/* Form note enhanced */
+.form-note {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: rgba(148,163,184,0.05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.form-note strong {
+  color: #fbbf24;
+}
+
+.form-note code {
+  background: rgba(59,130,246,0.12);
+  color: var(--accent2);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  border: 1px solid rgba(59,130,246,0.2);
+}
+
+/* Triple row refinement */
+.triple-row {
+  gap: 10px;
+}
+
+/* Form card top accent */
+.form {
+  position: relative;
+  overflow: hidden;
+}
+
+.form::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2), var(--green));
+  opacity: 0.7;
+}
+
+
 
 .role-options-grid input[type="checkbox"]:checked + span {
   color: var(--text);
