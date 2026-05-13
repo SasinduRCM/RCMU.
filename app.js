@@ -118,6 +118,15 @@ function parseSearchFilter(value) {
   const n = value.toString().trim().toLowerCase();
   if (n.startsWith("grade "))      return { type: "grade",      value: n.slice(6).trim() };
   if (n.startsWith("department ")) return { type: "department", value: n.slice(11).trim() };
+
+  // "sinhala announcer A"  or  "english announcer B"
+  const annMatch = n.match(/^(sinhala announcer|english announcer)\s+([abc])$/);
+  if (annMatch) return { type: "announcer_cat", role: annMatch[1], cat: annMatch[2].toUpperCase() };
+
+  // "sinhala announcer" alone → filter all sinhala announcers regardless of category
+  if (n === "sinhala announcer") return { type: "announcer_role", role: "sinhala announcer" };
+  if (n === "english announcer") return { type: "announcer_role", role: "english announcer" };
+
   return null;
 }
 
@@ -131,17 +140,54 @@ function saveAdminUsers() {
 
 // ── STUDENT DETAIL POPUP ──────────────────────────────────────────────────────
 
+function dutyRingSvg(duty) {
+  if (duty == null || isNaN(duty)) return `<div class="popup-duty-ring-empty">—</div>`;
+  const r = 28, cx = 34, cy = 34, stroke = 6;
+  const circ = 2 * Math.PI * r;
+  const offset = circ * (1 - Math.min(100, Math.max(0, duty)) / 100);
+  const col = duty >= 75 ? "#10b981" : duty >= 40 ? "#3b82f6" : "#f59e0b";
+  return `
+    <div class="popup-duty-ring" title="${duty}% duty completion">
+      <svg width="68" height="68" viewBox="0 0 68 68">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="${stroke}"/>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${col}" stroke-width="${stroke}"
+          stroke-dasharray="${circ}" stroke-dashoffset="${offset}"
+          stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})"
+          style="transition:stroke-dashoffset 0.8s cubic-bezier(.22,1,.36,1)"/>
+        <text x="${cx}" y="${cy + 5}" text-anchor="middle" fill="${col}" font-size="12" font-weight="800" font-family="DM Sans,sans-serif">${duty}%</text>
+        <text x="${cx}" y="${cy + 17}" text-anchor="middle" fill="rgba(148,163,184,0.7)" font-size="7" font-weight="600" font-family="DM Sans,sans-serif" letter-spacing="0.08em">DUTY</text>
+      </svg>
+    </div>`;
+}
+
+function popupSectionHead(icon, label) {
+  return `<div class="popup-section-head"><span class="popup-section-icon">${icon}</span><span>${label}</span></div>`;
+}
+
+function popupInfoChip(label, value, accent = false) {
+  return `
+    <div class="popup-chip${accent ? " popup-chip-accent" : ""}">
+      <span class="popup-chip-label">${label}</span>
+      <span class="popup-chip-val">${value || "—"}</span>
+    </div>`;
+}
+
 function openStudentPopup(s) {
   const existing = document.getElementById("studentPopup");
   if (existing) existing.remove();
   window.currentStudentDoc = s;
 
-  const initials = (s.fullname || "?").split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
-  const statusClass = s.status?.toLowerCase() === "active" ? "status-active" : "status-inactive";
-  const canEditDuty = ["admin", "editor"].includes(getCurrentUser()?.ADM_role);
+  const user        = getCurrentUser();
+  const canEditDuty         = ["admin","editor"].includes(user?.ADM_role);
   const canEditAchievements = canEditDuty;
-  const canEditDetails = getCurrentUser()?.ADM_role === "admin";
-  const isAdmin = canEditDetails;
+  const isAdmin             = user?.ADM_role === "admin";
+
+  const initials   = (s.fullname || "?").split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
+  const avatarGrad = getAvatarGradient(s.fullname);
+  const deptMeta   = getDeptMeta(s.department);
+  const expMeta    = getExpMeta(s.experienceLevel);
+  const statusClass = s.status?.toLowerCase() === "active" ? "status-active" : "status-inactive";
+  const duty       = s.dutyPercentage != null ? Number(s.dutyPercentage) : null;
 
   const overlay = document.createElement("div");
   overlay.id = "studentPopup";
@@ -150,114 +196,129 @@ function openStudentPopup(s) {
   overlay.setAttribute("aria-modal", "true");
 
   overlay.innerHTML = `
-    <div class="popup-card" id="popupCard">
-      <div class="popup-glow"></div>
-      <button class="popup-close" id="popupCloseBtn" aria-label="Close">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-          <path d="M1 1l16 16M17 1L1 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-      </button>
+    <div class="popup-card popup-card-rich" id="popupCard">
 
-      <div class="popup-header">
-        <div class="popup-avatar">${initials}</div>
-        <div class="popup-header-info">
-          <h2 class="popup-name">${s.fullname}</h2>
-          ${s.nickname ? `<p class="popup-nickname">"${s.nickname}"</p>` : ""}
-          <div class="popup-status-row">
-            <span class="status-badge ${statusClass}">${s.status || "—"}</span>
-            ${getDutyPercentageGraph(s.dutyPercentage, true)}
+      <!-- ── HERO ── -->
+      <div class="popup-hero" style="background:${avatarGrad}">
+        <div class="popup-hero-overlay"></div>
+        <button class="popup-close" id="popupCloseBtn" aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+            <path d="M1 1l16 16M17 1L1 17" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+        </button>
+
+        <div class="popup-hero-body">
+          <div class="popup-hero-avatar-wrap">
+            ${s.profileImageUrl
+              ? `<img src="${s.profileImageUrl}" class="popup-hero-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="">
+                 <div class="popup-hero-avatar" style="display:none">${initials}</div>`
+              : `<div class="popup-hero-avatar">${initials}</div>`
+            }
+            <span class="popup-hero-status-dot ${statusClass === "status-active" ? "dot-active" : "dot-inactive"}" title="${s.status}"></span>
           </div>
+
+          <div class="popup-hero-info">
+            <h2 class="popup-hero-name">${s.fullname}</h2>
+            ${s.nickname ? `<p class="popup-hero-nick">"${s.nickname}"</p>` : ""}
+            <div class="popup-hero-tags">
+              <span class="status-badge ${statusClass}">${s.status || "Unknown"}</span>
+              ${s.experienceLevel ? `<span class="popup-exp-tag" style="color:${expMeta.color};background:${expMeta.bg}">${s.experienceLevel}</span>` : ""}
+              ${s.department ? `<span class="popup-dept-tag" style="color:${deptMeta.color};background:${deptMeta.bg}">${deptMeta.icon} ${s.department}</span>` : ""}
+            </div>
+          </div>
+
+          ${duty !== null ? dutyRingSvg(duty) : ""}
         </div>
       </div>
 
-      <div class="popup-divider"></div>
+      <!-- ── BODY ── -->
+      <div class="popup-body">
 
-      <div class="popup-grid">
-        <div class="popup-field popup-field-full popup-field-row">
-          <div class="popup-mini-field">
-            <span class="popup-label">Student ID</span>
-            <span class="popup-value">${s.studentId || "—"}</span>
-          </div>
-          <div class="popup-mini-field">
-            <span class="popup-label">Grade</span>
-            <span class="popup-value">${s.grade || "—"}</span>
-          </div>
-          <div class="popup-mini-field">
-            <span class="popup-label">Class</span>
-            <span class="popup-value">${s.studentClass || "—"}</span>
+        <!-- Academic -->
+        <div class="popup-section">
+          ${popupSectionHead("📋", "Academic Info")}
+          <div class="popup-chip-row">
+            ${popupInfoChip("Student ID", s.studentId, true)}
+            ${popupInfoChip("Grade", s.grade)}
+            ${popupInfoChip("Class", s.studentClass)}
+            ${popupInfoChip("Joined", s.joinedYear)}
+            ${popupInfoChip("Age Cat.", s.experienceLevel)}
           </div>
         </div>
-        <div class="popup-field">
-          <span class="popup-label">Role</span>
-          <span class="popup-value">${s.role || "—"}</span>
+
+        <!-- Role & Dept -->
+        <div class="popup-section">
+          ${popupSectionHead("🎭", "Role & Department")}
+          <div class="popup-role-display">
+            ${formatRoleHtml(s.role)}
+          </div>
+          ${s.department ? `
+          <div class="popup-dept-row">
+            <span class="popup-dept-full" style="color:${deptMeta.color};border-color:${deptMeta.color}33;background:${deptMeta.bg}">
+              ${deptMeta.icon} ${s.department} Department
+            </span>
+          </div>` : ""}
         </div>
-        <div class="popup-field">
-          <span class="popup-label">Department</span>
-          <span class="popup-value">${s.department || "—"}</span>
+
+        <!-- Contact -->
+        <div class="popup-section">
+          ${popupSectionHead("📞", "Contact")}
+          <div class="popup-contact-grid">
+            ${s.email    ? `<a class="popup-contact-item" href="mailto:${s.email}"><span class="pci-icon">✉</span><span class="pci-val">${s.email}</span></a>` : ""}
+            ${s.phone    ? `<a class="popup-contact-item" href="tel:${s.phone}"><span class="pci-icon">📞</span><span class="pci-val">${s.phone}</span></a>` : ""}
+            ${s.whatsapp ? `<a class="popup-contact-item" href="https://wa.me/${s.whatsapp.replace(/\D/g,"")}" target="_blank"><span class="pci-icon">💬</span><span class="pci-val">${s.whatsapp}</span></a>` : ""}
+            ${s.birthday ? `<div class="popup-contact-item"><span class="pci-icon">🎂</span><span class="pci-val">${s.birthday}</span></div>` : ""}
+            ${s.address  ? `<div class="popup-contact-item popup-contact-full"><span class="pci-icon">📍</span><span class="pci-val">${s.address}</span></div>` : ""}
+          </div>
         </div>
-        <div class="popup-field">
-          <span class="popup-label">Age Category</span>
-          <span class="popup-value">${s.experienceLevel || "—"}</span>
+
+        <!-- Duty -->
+        <div class="popup-section">
+          ${popupSectionHead("📊", "Duty Performance")}
+          ${duty !== null ? `
+          <div class="popup-duty-section">
+            <div class="popup-duty-bar-wrap">
+              <div class="popup-duty-bigbar">
+                <div class="popup-duty-bigfill" style="width:${duty}%;background:${duty>=75?"#10b981":duty>=40?"#3b82f6":"#f59e0b"}"></div>
+              </div>
+              <div class="popup-duty-bignum" style="color:${duty>=75?"#10b981":duty>=40?"#3b82f6":"#f59e0b"}">${duty}%</div>
+            </div>
+            <p class="popup-duty-note">${duty >= 75 ? "✅ Excellent performance" : duty >= 40 ? "🔵 Moderate performance" : "⚠️ Needs improvement"}</p>
+          </div>` : `<p class="popup-empty-note">No duty data recorded yet.</p>`}
+          ${getDutyActivitiesHtml(s, isAdmin)}
         </div>
-        <div class="popup-field">
-          <span class="popup-label">Duty %</span>
-          <span class="popup-value">${s.dutyPercentage != null ? s.dutyPercentage + '%' : "—"}</span>
+
+        <!-- Achievements -->
+        <div class="popup-section">
+          ${popupSectionHead("🏆", "Achievements")}
+          ${getAchievementsHtml(s, isAdmin)}
         </div>
-        <div class="popup-field">
-          <span class="popup-label">Birthday</span>
-          <span class="popup-value">${s.birthday || "—"}</span>
-        </div>
-        <div class="popup-field">
-          <span class="popup-label">Joined Year</span>
-          <span class="popup-value">${s.joinedYear || "—"}</span>
-        </div>
-        <div class="popup-field popup-field-full">
-          <span class="popup-label">Email</span>
-          <span class="popup-value">${s.email || "—"}</span>
-        </div>
-        <div class="popup-field">
-          <span class="popup-label">Phone</span>
-          <span class="popup-value">${s.phone || "—"}</span>
-        </div>
-        <div class="popup-field">
-          <span class="popup-label">WhatsApp</span>
-          <span class="popup-value">${s.whatsapp || "—"}</span>
-        </div>
-        <div class="popup-field popup-field-full">
-          <span class="popup-label">Address</span>
-          <span class="popup-value">${s.address || "—"}</span>
-        </div>
-        ${getDutyActivitiesHtml(s, isAdmin)}
-        ${getAchievementsHtml(s, isAdmin)}
-        ${s.profileImageUrl ? `
-        <div class="popup-field popup-field-full">
-          <span class="popup-label">Profile Image</span>
-          <img src="${s.profileImageUrl}" alt="Profile" class="popup-profile-img" onerror="this.style.display='none'">
+
+        <!-- Admin Actions -->
+        ${(isAdmin || canEditDuty || canEditAchievements) ? `
+        <div class="popup-section popup-actions-section">
+          ${popupSectionHead("⚙️", "Actions")}
+          <div class="popup-action-grid">
+            ${isAdmin        ? `<button class="pab pab-primary"   onclick="openStudentEditor()">     <span>🖊</span> Edit Details</button>`          : ""}
+            ${canEditDuty    ? `<button class="pab pab-blue"      onclick="openDutyEditor()">        <span>📊</span> Update Duty</button>`            : ""}
+            ${canEditAchievements ? `<button class="pab pab-gold" onclick="openAchievementEditor()"><span>🏆</span> Add Achievement</button>`        : ""}
+            ${isAdmin        ? `<button class="pab pab-muted"     onclick="deleteSelectedHistory()"> <span>🗑</span> Delete Selected</button>`       : ""}
+            ${isAdmin        ? `<button class="pab pab-danger"    onclick="clearStudentHistory('${s._docId}')"><span>⚠</span> Clear History</button>` : ""}
+            ${isAdmin        ? `<button class="pab pab-red"       onclick="confirmDeleteStudent('${s._docId}','${(s.fullname||"this student").replace(/'/g,"\\'")}')"><span>❌</span> Delete Student</button>` : ""}
+          </div>
         </div>` : ""}
-      </div>
 
-      ${(canEditDetails || canEditDuty || canEditAchievements) ? `
-      <div class="popup-actions">
-        ${canEditDetails ? `<button class="popup-action-btn" type="button" onclick="openStudentEditor()">Edit Details</button>` : ""}
-        ${canEditDuty ? `<button class="popup-action-btn" type="button" onclick="openDutyEditor()">Update Duty</button>` : ""}
-        ${canEditAchievements ? `<button class="popup-action-btn" type="button" onclick="openAchievementEditor()">Update Achievements</button>` : ""}
-        ${canEditDetails ? `<button class="popup-action-btn" type="button" onclick="deleteSelectedHistory()">Delete Selected History</button>` : ""}
-        ${canEditDetails ? `<button class="delete-confirm-btn" type="button" onclick="clearStudentHistory('${s._docId}')">Clear All History</button>` : ""}
-        ${canEditDetails ? `<button class="delete-confirm-btn" type="button" onclick="confirmDeleteStudent('${s._docId}', '${(s.fullname || "this student").replace(/'/g, "\\'")}')">Delete Student</button>` : ""}
+        <button class="popup-close-bottom" id="popupCloseBtnBottom">
+          <svg width="14" height="14" viewBox="0 0 18 18" fill="none" style="opacity:.6"><path d="M1 1l16 16M17 1L1 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Close
+        </button>
       </div>
-      ` : ""}
-
-      <button class="popup-close-bottom" id="popupCloseBtnBottom">Close</button>
     </div>
   `;
 
   document.body.appendChild(overlay);
   document.body.style.overflow = "hidden";
-
-  // Animate in
-  requestAnimationFrame(() => {
-    overlay.classList.add("popup-visible");
-  });
+  requestAnimationFrame(() => overlay.classList.add("popup-visible"));
 
   const close = () => {
     overlay.classList.remove("popup-visible");
@@ -805,6 +866,23 @@ function getFilteredSortedStudents() {
     filtered = filtered.filter(s => (s.grade ?? "").toString().trim().toLowerCase() === parsedFilter.value);
   } else if (parsedFilter?.type === "department") {
     filtered = filtered.filter(s => (s.department ?? "").toString().trim().toLowerCase() === parsedFilter.value);
+  } else if (parsedFilter?.type === "announcer_cat") {
+    // e.g. "sinhala announcer A" → role contains "Sinhala Announcer (A)"
+    filtered = filtered.filter(s => {
+      const role = s.role || "";
+      const roleLower = role.toLowerCase();
+      const matchSinhala = parsedFilter.role === "sinhala announcer" && roleLower.includes("sinhala announcer");
+      const matchEnglish = parsedFilter.role === "english announcer" && (roleLower.includes("english announcer") || roleLower.includes("english announce"));
+      return (matchSinhala || matchEnglish) && role.includes(`(${parsedFilter.cat})`);
+    });
+  } else if (parsedFilter?.type === "announcer_role") {
+    // "sinhala announcer" with no category → all of that announcer type
+    filtered = filtered.filter(s => {
+      const roleLower = (s.role || "").toLowerCase();
+      if (parsedFilter.role === "sinhala announcer") return roleLower.includes("sinhala announcer");
+      if (parsedFilter.role === "english announcer") return roleLower.includes("english announcer") || roleLower.includes("english announce");
+      return false;
+    });
   } else if (searchValue) {
     filtered = filtered.filter(s =>
       [s.fullname, s.studentId, s.grade, s.role, s.department, s.status, s.email, s.phone, s.address, s.birthday, s.joinedYear]
@@ -854,20 +932,17 @@ function getDutyPercentageGraph(value, inline = false) {
 
 function getDutyActivitiesHtml(student, isAdmin = false) {
   const list = getDutyActivitiesList(student);
-  if (!list.length) {
-    return `<div class="popup-field popup-field-full"><span class="popup-label">Duty Activities</span><span class="popup-value">—</span></div>`;
-  }
+  if (!list.length) return `<p class="popup-empty-note">No duty activities recorded yet.</p>`;
   return `
-    <div class="popup-field popup-field-full">
-      <span class="popup-label">Duty Activities</span>
-      <div class="popup-value popup-value-list">
-        ${list.map((entry, index) => `
-          <label class="history-item">
-            ${isAdmin ? `<input type="checkbox" class="history-checkbox" data-entry-type="duty" data-entry-index="${index}">` : ""}
-            <span class="history-text"><strong>${index + 1}.</strong> ${entry.text}</span>
-          </label>
-        `).join("")}
-      </div>
+    <div class="popup-history-list">
+      ${list.map((entry, index) => `
+        <label class="history-item">
+          ${isAdmin ? `<input type="checkbox" class="history-checkbox" data-entry-type="duty" data-entry-index="${index}">` : ""}
+          <span class="history-num">${index + 1}</span>
+          <span class="history-text">${entry.text}</span>
+          ${entry.createdAt ? `<span class="history-date">${new Date(entry.createdAt).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"2-digit"})}</span>` : ""}
+        </label>
+      `).join("")}
     </div>
   `;
 }
@@ -888,22 +963,59 @@ function getLatestAchievementText(student) {
 
 function getAchievementsHtml(student, isAdmin = false) {
   const list = getAchievementsList(student);
-  if (!list.length) {
-    return `<div class="popup-field popup-field-full"><span class="popup-label">Achievements</span><span class="popup-value">—</span></div>`;
-  }
+  if (!list.length) return `<p class="popup-empty-note">No achievements recorded yet.</p>`;
   return `
-    <div class="popup-field popup-field-full">
-      <span class="popup-label">Achievements</span>
-      <div class="popup-value popup-value-list">
-        ${list.map((entry, index) => `
-          <label class="history-item">
-            ${isAdmin ? `<input type="checkbox" class="history-checkbox" data-entry-type="achievement" data-entry-index="${index}">` : ""}
-            <span class="history-text"><strong>${index + 1}.</strong> ${entry.text}</span>
-          </label>
-        `).join("")}
-      </div>
+    <div class="popup-history-list">
+      ${list.map((entry, index) => `
+        <label class="history-item history-achievement">
+          ${isAdmin ? `<input type="checkbox" class="history-checkbox" data-entry-type="achievement" data-entry-index="${index}">` : ""}
+          <span class="history-num history-num-gold">${index + 1}</span>
+          <span class="history-text">${entry.text}</span>
+          ${entry.createdAt ? `<span class="history-date">${new Date(entry.createdAt).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"2-digit"})}</span>` : ""}
+        </label>
+      `).join("")}
     </div>
   `;
+}
+
+// ── DISPLAY HELPERS ──────────────────────────────────────────────────────────
+
+function formatRoleHtml(roleStr) {
+  if (!roleStr) return `<span class="role-empty">—</span>`;
+  return roleStr.split(" / ").map(part => {
+    const catMatch = part.match(/\(([ABC])\)/);
+    const cat = catMatch ? catMatch[1] : null;
+    const display = part.replace(/\s*\([ABC]\)/, "").trim();
+    return `<span class="role-pill">${display}${cat ? `<span class="role-cat-badge cat-${cat}">${cat}</span>` : ""}</span>`;
+  }).join("");
+}
+
+function getDeptMeta(dept) {
+  const map = {
+    Photography: { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", icon: "📷" },
+    Web:         { color: "#06b6d4", bg: "rgba(6,182,212,0.1)",  icon: "🌐" },
+    Media:       { color: "#a78bfa", bg: "rgba(167,139,250,0.1)", icon: "🎬" }
+  };
+  return map[dept] || { color: "#64748b", bg: "rgba(100,116,139,0.1)", icon: "👤" };
+}
+
+function getExpMeta(level) {
+  const map = {
+    Junior:       { color: "#10b981", bg: "rgba(16,185,129,0.12)" },
+    Intermediate: { color: "#3b82f6", bg: "rgba(59,130,246,0.12)" },
+    Senior:       { color: "#f59e0b", bg: "rgba(245,158,11,0.12)" }
+  };
+  return map[level] || { color: "#64748b", bg: "rgba(100,116,139,0.1)" };
+}
+
+function getAvatarGradient(name) {
+  const palettes = [
+    ["#3b82f6","#06b6d4"], ["#8b5cf6","#ec4899"], ["#10b981","#06b6d4"],
+    ["#f59e0b","#ef4444"], ["#6366f1","#8b5cf6"], ["#14b8a6","#3b82f6"],
+    ["#f97316","#f59e0b"], ["#ec4899","#8b5cf6"]
+  ];
+  const idx = ((name || "?").charCodeAt(0) + ((name || "?").charCodeAt(1) || 0)) % palettes.length;
+  return `linear-gradient(135deg, ${palettes[idx][0]}, ${palettes[idx][1]})`;
 }
 
 function renderStudents() {
@@ -915,89 +1027,163 @@ function renderStudents() {
 
   if (!sorted.length) {
     const msg = searchValue
-      ? "No students match your search."
-      : "No students found yet. Add a member from the Add Student page.";
+      ? `<div class="empty-icon">🔍</div><p>No students match "<strong>${searchValue}</strong>"</p>`
+      : `<div class="empty-icon">🎓</div><p>No students yet. <a href="add.html">Add the first member →</a></p>`;
     list.innerHTML = `<div class="empty-state">${msg}</div>`;
     return;
   }
 
+  // ── TABLE VIEW ──────────────────────────────────────────────────────────────
   if (viewMode === "table") {
     let html = `
       <div class="student-table">
         <div class="table-row header">
-          <div>Name</div><div>ID</div><div>Grade</div><div>Class</div>
-          <div>Role</div><div>Status</div><div>Duty %</div><div>Activity</div><div>Achievement</div>
-          <div>Email</div><div>Address</div><div>Birthday</div>
+          <div>Name</div>
+          <div>ID</div>
+          <div>Gr.</div>
+          <div>Cls.</div>
+          <div>Role</div>
+          <div>Dept</div>
+          <div>Level</div>
+          <div>Status</div>
+          <div>Duty</div>
+          <div>Activity</div>
+          <div>Email</div>
+          <div>Birthday</div>
         </div>
     `;
     sorted.forEach((s, i) => {
+      const statusClass = s.status?.toLowerCase() === "active" ? "status-active" : "status-inactive";
+      const deptMeta   = getDeptMeta(s.department);
+      const expMeta    = getExpMeta(s.experienceLevel);
+      const initials   = (s.fullname || "?").split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
+      const avatarGrad = getAvatarGradient(s.fullname);
+      const duty       = s.dutyPercentage != null ? Number(s.dutyPercentage) : null;
       html += `
-        <div class="table-row clickable-row" data-idx="${i}" style="animation-delay:${i * 0.04}s">
-          <div>${s.fullname}</div><div>${s.studentId}</div><div>${s.grade}</div><div>${s.studentClass || "—"}</div>
-          <div>${s.role}</div><div>${s.status} ${getDutyPercentageGraph(s.dutyPercentage, true)}</div><div>${s.dutyPercentage != null ? s.dutyPercentage + '%' : "—"}</div>
-          <div>${getLatestDutyActivityText(s) || "—"}</div><div>${getLatestAchievementText(s) || "—"}</div>
-          <div>${s.email}</div><div>${s.address || "—"}</div><div>${s.birthday || "—"}</div>
+        <div class="table-row clickable-row" data-idx="${i}" style="animation-delay:${i * 0.03}s">
+          <div class="td-name">
+            <div class="td-avatar" style="background:${avatarGrad}">${initials}</div>
+            <div class="td-name-info">
+              <span class="td-fullname">${s.fullname}</span>
+              ${s.nickname ? `<span class="td-nickname">"${s.nickname}"</span>` : ""}
+            </div>
+          </div>
+          <div class="td-mono">${s.studentId || "—"}</div>
+          <div class="td-center"><span class="td-grade-badge">${s.grade || "—"}</span></div>
+          <div class="td-center">${s.studentClass || "—"}</div>
+          <div class="td-role">${formatRoleHtml(s.role)}</div>
+          <div><span class="td-dept-badge" style="color:${deptMeta.color};background:${deptMeta.bg};border-color:${deptMeta.color}44">${deptMeta.icon} ${s.department || "—"}</span></div>
+          <div>${s.experienceLevel ? `<span class="td-exp-badge" style="color:${expMeta.color};background:${expMeta.bg}">${s.experienceLevel}</span>` : "—"}</div>
+          <div><span class="status-badge ${statusClass}">${s.status || "—"}</span></div>
+          <div class="td-duty">
+            ${duty !== null ? `
+              <div class="td-duty-wrap">
+                <div class="td-duty-bar"><div class="td-duty-fill" style="width:${duty}%;background:${duty >= 75 ? '#10b981' : duty >= 40 ? '#3b82f6' : '#f59e0b'}"></div></div>
+                <span class="td-duty-num">${duty}%</span>
+              </div>` : "—"}
+          </div>
+          <div class="td-clip">${getLatestDutyActivityText(s) || "—"}</div>
+          <div class="td-clip td-email">${s.email || "—"}</div>
+          <div class="td-mono">${s.birthday || "—"}</div>
         </div>
       `;
     });
     html += `</div>`;
     list.innerHTML = html;
 
-    // Bind row clicks
     list.querySelectorAll(".clickable-row").forEach(row => {
-      row.addEventListener("click", () => {
-        const idx = parseInt(row.getAttribute("data-idx"));
-        openStudentPopup(sorted[idx]);
-      });
+      row.addEventListener("click", () => openStudentPopup(sorted[parseInt(row.dataset.idx)]));
     });
     return;
   }
 
+  // ── CARD VIEW ───────────────────────────────────────────────────────────────
   let html = `<div class="student-grid">`;
   sorted.forEach((s, i) => {
-    const initials = (s.fullname || "?").split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
+    const initials   = (s.fullname || "?").split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
     const statusClass = s.status?.toLowerCase() === "active" ? "status-active" : "status-inactive";
+    const avatarGrad = getAvatarGradient(s.fullname);
+    const deptMeta   = getDeptMeta(s.department);
+    const expMeta    = getExpMeta(s.experienceLevel);
+    const duty       = s.dutyPercentage != null ? Number(s.dutyPercentage) : null;
+    const dutyColor  = duty !== null ? (duty >= 75 ? "#10b981" : duty >= 40 ? "#3b82f6" : "#f59e0b") : "#64748b";
+    const hasImg     = !!s.profileImageUrl;
+
     html += `
       <div class="card clickable-card" data-idx="${i}" style="animation-delay:${i * 0.05}s">
+
+        <div class="card-band" style="background:${avatarGrad}"></div>
+
         <div class="card-top">
-          <div class="card-avatar">${initials}</div>
+          <div class="card-avatar-wrap">
+            ${hasImg
+              ? `<img src="${s.profileImageUrl}" class="card-avatar card-avatar-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="">`
+              : ""}
+            <div class="card-avatar" style="${hasImg ? "display:none;" : ""}background:${avatarGrad}">${initials}</div>
+          </div>
           <div class="card-header-info">
             <h2>${s.fullname}</h2>
+            ${s.nickname ? `<p class="card-nickname">"${s.nickname}"</p>` : ""}
             <div class="card-status-row">
               <span class="status-badge ${statusClass}">${s.status || "—"}</span>
-              ${getDutyPercentageGraph(s.dutyPercentage, true)}
+              ${s.experienceLevel ? `<span class="card-exp-tag" style="color:${expMeta.color};background:${expMeta.bg}">${s.experienceLevel}</span>` : ""}
             </div>
           </div>
+          <div class="card-dept-flag" style="color:${deptMeta.color};background:${deptMeta.bg}" title="${s.department || ""}">${deptMeta.icon}</div>
         </div>
-        <div class="card-body">
-          <p><strong>ID</strong>    <span>${s.studentId}</span></p>
-          <p><strong>Grade</strong> <span>${s.grade}</span></p>
-          <p><strong>Class</strong> <span>${s.studentClass || "—"}</span></p>
-          <p><strong>Role</strong>  <span>${s.role}</span></p>
-          <p><strong>Dept</strong>  <span>${s.department}</span></p>
-          <p><strong>Age</strong>   <span>${s.experienceLevel}</span></p>
-          <p><strong>Duty %</strong> <span>${s.dutyPercentage != null ? s.dutyPercentage + '%' : "—"}</span></p>
-          <p><strong>Activity</strong> <span>${getLatestDutyActivityText(s) ? (getLatestDutyActivityText(s).length > 40 ? getLatestDutyActivityText(s).slice(0, 40) + '…' : getLatestDutyActivityText(s)) : "—"}</span></p>
-          <p><strong>Achievement</strong> <span>${getLatestAchievementText(s) ? (getLatestAchievementText(s).length > 40 ? getLatestAchievementText(s).slice(0, 40) + '…' : getLatestAchievementText(s)) : "—"}</span></p>
-          <p><strong>Email</strong> <span>${s.email}</span></p>
-          <p><strong>Phone</strong> <span>${s.phone || "—"}</span></p>
-          <p><strong>WhatsApp</strong> <span>${s.whatsapp || "—"}</span></p>
-          <p><strong>Address</strong> <span>${s.address || "—"}</span></p>
-          <p><strong>Birthday</strong> <span>${s.birthday || "—"}</span></p>
+
+        <div class="card-role-strip">
+          ${formatRoleHtml(s.role)}
         </div>
-        <div class="card-footer-hint">Tap to view details →</div>
+
+        <div class="card-stats-row">
+          <div class="card-stat">
+            <span class="card-stat-val">${s.grade || "—"}</span>
+            <span class="card-stat-key">Grade</span>
+          </div>
+          <div class="card-stat-div"></div>
+          <div class="card-stat">
+            <span class="card-stat-val">${s.studentClass || "—"}</span>
+            <span class="card-stat-key">Class</span>
+          </div>
+          <div class="card-stat-div"></div>
+          <div class="card-stat">
+            <span class="card-stat-val">${s.joinedYear || "—"}</span>
+            <span class="card-stat-key">Joined</span>
+          </div>
+          <div class="card-stat-div"></div>
+          <div class="card-stat">
+            <span class="card-stat-val">${s.studentId || "—"}</span>
+            <span class="card-stat-key">ID</span>
+          </div>
+        </div>
+
+        ${duty !== null ? `
+        <div class="card-duty-row">
+          <div class="card-duty-track">
+            <div class="card-duty-fill" style="width:${duty}%;background:${dutyColor}"></div>
+          </div>
+          <span class="card-duty-label" style="color:${dutyColor}">${duty}% Duty</span>
+        </div>` : ""}
+
+        <div class="card-meta-row">
+          ${s.email    ? `<span class="card-meta-item" title="${s.email}">✉ ${s.email}</span>` : ""}
+          ${s.phone    ? `<span class="card-meta-item" title="${s.phone}">📞 ${s.phone}</span>` : ""}
+          ${s.birthday ? `<span class="card-meta-item">🎂 ${s.birthday}</span>` : ""}
+        </div>
+
+        <div class="card-footer-hint">
+          <span>View full profile</span>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
       </div>
     `;
   });
   html += `</div>`;
   list.innerHTML = html;
 
-  // Bind card clicks
   list.querySelectorAll(".clickable-card").forEach(card => {
-    card.addEventListener("click", () => {
-      const idx = parseInt(card.getAttribute("data-idx"));
-      openStudentPopup(sorted[idx]);
-    });
+    card.addEventListener("click", () => openStudentPopup(sorted[parseInt(card.dataset.idx)]));
   });
 }
 
@@ -1362,9 +1548,41 @@ async function initStudentListPage() {
     downloadStudentSheet(vis);
   });
 
+  // ── DYNAMIC SEARCH SUGGESTIONS ────────────────────────────
+  function updateSearchSuggestions(value) {
+    if (!searchSugg) return;
+    const v = (value || "").trim().toLowerCase();
+
+    const isSinhala = v.includes("sinhala announcer");
+    const isEnglish = v.includes("english announcer") || v.includes("english announce");
+
+    if (isSinhala || isEnglish) {
+      const prefix = isSinhala ? "sinhala announcer" : "english announcer";
+      searchSugg.innerHTML = `
+        <span class="sugg-label">Category:</span>
+        <button type="button" data-suggestion="${prefix} A" class="sugg-cat sugg-cat-a">A</button>
+        <button type="button" data-suggestion="${prefix} B" class="sugg-cat sugg-cat-b">B</button>
+        <button type="button" data-suggestion="${prefix} C" class="sugg-cat sugg-cat-c">C</button>`;
+      searchSugg.classList.add("active");
+    } else {
+      searchSugg.innerHTML = `
+        <button type="button" data-suggestion="grade ">grade</button>
+        <button type="button" data-suggestion="department ">department</button>`;
+      if (!v) searchSugg.classList.add("active");
+    }
+  }
+
   if (searchInput) {
-    searchInput.addEventListener("input", e => { searchQuery = e.target.value; renderStudents(); });
-    searchInput.addEventListener("focus", () => searchSugg?.classList.add("active"));
+    searchInput.addEventListener("input", e => {
+      searchQuery = e.target.value;
+      updateSearchSuggestions(e.target.value);
+      searchSugg?.classList.add("active");
+      renderStudents();
+    });
+    searchInput.addEventListener("focus", () => {
+      updateSearchSuggestions(searchInput.value);
+      searchSugg?.classList.add("active");
+    });
   }
 
   if (sortSelect) sortSelect.addEventListener("change", e => { sortOption = e.target.value; renderStudents(); });
@@ -1376,7 +1594,14 @@ async function initStudentListPage() {
       const sug = btn.getAttribute("data-suggestion") || "";
       searchQuery = sug;
       if (searchInput) { searchInput.value = sug; searchInput.focus(); }
-      searchSugg.classList.remove("active");
+      // If it ends with a letter (category was chosen) close suggestions; otherwise keep open for sub-selection
+      const endsWithCat = /\s[ABC]$/.test(sug.trim());
+      if (endsWithCat) {
+        searchSugg.classList.remove("active");
+      } else {
+        updateSearchSuggestions(sug);
+        searchSugg.classList.add("active");
+      }
       renderStudents();
     });
   }
